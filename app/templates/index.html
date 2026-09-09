@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UAE Invoice Compliance</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>UAE Invoice Compliance</h1>
+      <span class="muted">E-invoicing &amp; VAT field readiness</span>
+    </header>
+
+    <div class="panel">
+      <h2>Check an invoice</h2>
+      <p class="muted">
+        Upload a PDF invoice. We extract the fields, run UAE FTA e-invoicing
+        checks, and flag what needs fixing before you file.
+      </p>
+      <form action="/reports" method="post" enctype="multipart/form-data">
+        <label for="file">Invoice PDF</label>
+        <input type="file" id="file" name="file" accept="application/pdf,.pdf" required />
+        <div class="row">
+          <button type="submit">Run check</button>
+        </div>
+      </form>
+      {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    </div>
+
+    <div class="panel">
+      <h2>Recent runs</h2>
+      {% if recent %}
+        <ul class="recent-list">
+          {% for r in recent %}
+          <li>
+            <a href="/reports/{{ r.id }}">{{ r.filename }}</a>
+            <span class="muted">
+              <span class="sev sev-{{ r.risk_level }}">{{ r.risk_score }}/100</span>
+              {{ r.summary }}{% if r.summary|length > 0 %}&hellip;{% endif %}
+            </span>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">No runs yet — upload a PDF above.</p>
+      {% endif %}
+    </div>
+
+    <p class="disclaimer">
+      Decision-support tool, not tax or legal advice. Always verify findings
+      with a qualified UAE tax advisor before filing.
+    </p>
+  </div>
+</body>
+</html>

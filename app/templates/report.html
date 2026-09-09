@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ envelope.filename }} — UAE Invoice Compliance</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><a href="/" style="color:inherit;text-decoration:none;">UAE Invoice Compliance</a></h1>
+      <a href="/" class="muted">&larr; new check</a>
+    </header>
+
+    <div class="panel summary">
+      <div class="risk-badge {{ envelope.risk_level }}">{{ envelope.risk_score }}</div>
+      <div class="summary-text">
+        <div class="summary-headline">{{ envelope.summary }}</div>
+        <div class="muted">
+          Source: <strong>{{ envelope.filename }}</strong>
+          &middot; Rules: {{ envelope.rules_source }}
+        </div>
+      </div>
+    </div>
+
+    {% if envelope.findings %}
+    <div class="panel">
+      <h2>Findings ({{ envelope.findings|length }})</h2>
+      {% for f in envelope.findings %}
+      <div class="finding sev-{{ f.severity }}-border">
+        <div class="finding-head">
+          <span class="sev sev-{{ f.severity }}">{{ f.severity }}</span>
+          <code class="code">{{ f.code }}</code>
+        </div>
+        <p class="finding-msg">{{ f.message }}</p>
+        <p class="finding-fix"><strong>Fix:</strong> {{ f.fix }}</p>
+        <p class="finding-cite muted"><strong>Source:</strong> {{ f.citation }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="panel all-clear">
+      <h2>All clear</h2>
+      <p>No FTA e-invoicing or VAT field issues detected in this invoice.</p>
+    </div>
+    {% endif %}
+
+    <div class="panel">
+      <h2>Extracted fields</h2>
+      <table class="extracted">
+        {% for k, v in envelope.extracted.items() %}
+          <tr>
+            <th>{{ k }}</th>
+            <td><code>{{ v }}</code></td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <p class="disclaimer">
+      Decision-support tool, not tax or legal advice. Always verify findings
+      with a qualified UAE tax advisor before filing.
+    </p>
+  </div>
+</body>
+</html>
