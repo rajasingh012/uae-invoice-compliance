@@ -45,6 +45,43 @@ def _line_vat_total(line_items: list[dict[str, Any]]) -> float | None:
     return round(total, 2)
 
 
+def _line_subtotal_sum(line_items: list[dict[str, Any]]) -> float | None:
+    """Sum of (qty * unit_price) across all line items. None if any line lacks qty/price."""
+    total = 0.0
+    for li in line_items or []:
+        qty = li.get("quantity")
+        price = li.get("unit_price")
+        if qty is None or price is None:
+            return None
+        total += float(qty) * float(price)
+    return round(total, 2)
+
+
+def _line_vat_individually_consistent(
+    line_items: list[dict[str, Any]],
+    vat_amount: Any,
+) -> bool:
+    """True iff every line's stated VAT matches (qty * price * rate / 100).
+
+    Used to catch the hallucination pattern where the invoice total is right
+    but individual line VATs are wrong.
+    """
+    if vat_amount is None or not line_items:
+        return True
+    stated_total = float(vat_amount)
+    computed_total = 0.0
+    for li in line_items:
+        qty = li.get("quantity") or 0
+        price = li.get("unit_price") or 0
+        rate = li.get("vat_rate") or 0
+        computed_total += qty * price * (rate / 100.0)
+    # 1% tolerance on the rolled-up total — accommodates single-line rounding
+    # while still flagging gross errors like "1 AED instead of 50 AED".
+    if stated_total == 0:
+        return computed_total < 0.01
+    return abs(stated_total - computed_total) / abs(stated_total) <= 0.01
+
+
 def evaluate(
     extracted: dict[str, Any], rules_doc: dict[str, Any]
 ) -> list[dict[str, Any]]:
@@ -106,6 +143,39 @@ def _rule_fires(rule: dict[str, Any], extracted: dict[str, Any]) -> bool:
         if stated is None or computed is None:
             return False
         return round(float(stated), 2) != computed
+
+    if field == "line_subtotal_sum":
+        # Sum of (qty * unit_price) per line must match the stated subtotal.
+        # Catches: LLM reads line qty as "10" when it was "100", or hallucinated subtotal.
+        stated = extracted.get("subtotal")
+        computed = _line_subtotal_sum(extracted.get("line_items") or [])
+        if stated is None or computed is None:
+            return False
+        # Tolerance: 1% of stated subtotal, min AED 0.50 (catches real errors,
+        # ignores small rounding noise).
+        tolerance = max(0.50, abs(float(stated)) * 0.01)
+        return abs(float(stated) - computed) > tolerance
+
+    if field == "line_vat_individual":
+        # Stated vat_amount must equal sum of per-line VAT.
+        # Sibling of vat_amount rule — catches hallucination where total VAT is right
+        # but individual lines are wrong.
+        return not _line_vat_individually_consistent(
+            extracted.get("line_items") or [], extracted.get("vat_amount")
+        )
+
+    if field == "total_reconciliation":
+        # Stated total must equal stated subtotal + stated vat_amount.
+        # Catches: LLM misread the printed total, or one of subtotal/vat
+        # was hallucinated while the other was correct.
+        subtotal = extracted.get("subtotal")
+        vat = extracted.get("vat_amount")
+        total = extracted.get("total")
+        if subtotal is None or vat is None or total is None:
+            return False
+        expected = float(subtotal) + float(vat)
+        tolerance = max(0.50, abs(expected) * 0.01)
+        return abs(float(total) - expected) > tolerance
 
     if field == "reverse_charge":
         inv_type = extracted.get("invoice_type")

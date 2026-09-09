@@ -74,9 +74,36 @@
       "code": "VAT-MATH-CORRECT",
       "field": "vat_amount",
       "severity": "critical",
-      "applies_when": "line_items present and vat_rate known",
+      "applies_when": "bool(extracted.get('line_items')) and extracted.get('vat_rate') is not None",
       "message": "Sum of line-level VAT does not match the invoice's stated total VAT.",
       "fix": "Recompute VAT per line at the stated rate and reconcile to the printed total. A mismatch is a red flag during FTA audit.",
+      "citation": "FTA VAT Guide — Calculation of Tax"
+    },
+    {
+      "code": "LINE-SUBTOTAL-SUM-CORRECT",
+      "field": "line_subtotal_sum",
+      "severity": "critical",
+      "applies_when": "bool(extracted.get('line_items')) and extracted.get('subtotal') is not None",
+      "message": "Sum of (quantity x unit price) across line items does not match the stated subtotal.",
+      "fix": "Recompute the subtotal as the sum of each line's quantity times unit price. A mismatch means either a line was misread or the subtotal was misprinted. Reconcile before filing.",
+      "citation": "FTA VAT Guide — Calculation of Tax"
+    },
+    {
+      "code": "LINE-VAT-INDIVIDUAL-CORRECT",
+      "field": "line_vat_individual",
+      "severity": "warning",
+      "applies_when": "bool(extracted.get('line_items')) and extracted.get('vat_amount') is not None",
+      "message": "Stated VAT total is internally inconsistent with line-level VAT computations.",
+      "fix": "Verify each line's VAT amount matches (quantity x unit price x rate / 100). The grand total may reconcile but individual lines may be wrong — this is a common hallucination pattern when OCR misreads a single digit.",
+      "citation": "FTA VAT Guide — Calculation of Tax (per-line)"
+    },
+    {
+      "code": "TOTAL-RECONCILES",
+      "field": "total_reconciliation",
+      "severity": "critical",
+      "applies_when": "extracted.get('subtotal') is not None and extracted.get('vat_amount') is not None and extracted.get('total') is not None",
+      "message": "Stated invoice total does not equal subtotal + VAT.",
+      "fix": "Verify the printed total. It must equal subtotal plus VAT. A mismatch indicates a misread or misprint — recheck the source document before filing.",
       "citation": "FTA VAT Guide — Calculation of Tax"
     },
     {
@@ -101,7 +128,7 @@
       "code": "CORPORATE-TAX-DOC-REF",
       "field": "corporate_tax_treatment",
       "severity": "info",
-      "applies_when": "supplier_trn present and buyer_trn present",
+      "applies_when": "bool(extracted.get('supplier_trn')) and bool(extracted.get('buyer_trn'))",
       "message": "Corporate tax deductibility marker is missing on the invoice.",
       "fix": "While not yet mandatory, tagging the invoice with 'CT-deductible' / 'CT-non-deductible' helps the buyer prepare Federal Decree-Law 47/2022 corporate tax returns. Best practice for UAE Corporate Tax readiness.",
       "citation": "UAE Federal Decree-Law No. 47/2022 — Deductible Expenses"

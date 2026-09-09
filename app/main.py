@@ -51,7 +51,30 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 # --- helpers ----------------------------------------------------------------
 
 def _rules_payload() -> dict[str, Any]:
-    return json.loads(RULES_PATH.read_text(encoding="utf-8"))
+    rules = json.loads(RULES_PATH.read_text(encoding="utf-8"))
+    _validate_rules(rules)
+    return rules
+
+
+def _validate_rules(rules: dict[str, Any]) -> None:
+    """Fail loudly at startup if any rule has a bad applies_when expression.
+
+    Without this, a SyntaxError in applies_when is swallowed by the
+    eval/except in _rule_fires and the rule silently never fires. We
+    hit this exact bug on 2026-09-09 (5 rules had unparseable
+    `field present` expressions).
+    """
+    for rule in rules.get("rules", []):
+        expr = rule.get("applies_when", "always")
+        if expr == "always":
+            continue
+        try:
+            compile(expr, f"<rule {rule['code']}>", "eval")
+        except SyntaxError as exc:
+            raise RuntimeError(
+                f"Rule {rule['code']!r} has invalid applies_when expression "
+                f"{expr!r}: {exc.msg}"
+            ) from exc
 
 
 def _risk_level(score: int) -> str:
