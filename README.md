@@ -67,6 +67,18 @@ The rules anchor against publicly available UAE FTA publications:
 Links are listed at the top of `rules/einvoicing_uae.json` under
 `source_documents`.
 
+## Scope of compliance (v0.1)
+
+This tool checks the **subset of FTA e-invoicing and VAT field-readiness
+rules most UAE SMEs encounter day-to-day** — supplier/buyer TRN presence
+and format, invoice number and date, line-item structure, VAT math,
+reverse-charge flag, currency. It is **not** a full PINT-AE Schematron
+validator and does not submit invoices to FTA, an ASP, or Peppol. For full
+PINT-AE structural conformance, see `cmendezs/mcp-einvoicing-ae`.
+
+The rules live in `rules/einvoicing_uae.json`. Add or adjust them without
+touching code.
+
 ## Limitations (v0.1)
 
 - Text-layer PDFs and digitally-generated invoices only. Scanned/image-only

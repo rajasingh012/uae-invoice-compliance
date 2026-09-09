@@ -23,9 +23,10 @@ DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.co
 # Fields we want — keep this small and stable. Adding a field here means
 # downstream rules can rely on it.
 EXTRACTION_SCHEMA_HINT = """{
-  "supplier_trn": "<15-digit UAE TRN, or null>",
+  "supplier_trn": "<15-digit UAE TRN (format: starts with 1, ends with 03), or null>",
   "supplier_name": "<string, or null>",
   "buyer_trn": "<15-digit UAE TRN, or null>",
+  "tin": "<10-digit Peppol participant ID (first 10 digits of TRN), or null>",
   "buyer_name": "<string, or null>",
   "invoice_number": "<string, or null>",
   "invoice_date": "<ISO-8601 date YYYY-MM-DD, or null>",

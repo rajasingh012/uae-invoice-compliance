@@ -14,6 +14,11 @@
       "url": "https://www.fta.gov.ae/"
     },
     {
+      "id": "PINT-AE",
+      "title": "Peppol PINT-AE Specification (UAE-specific PINT profile, Feb 2026)",
+      "url": "https://docs.peppol.eu/poac/pint-ae/"
+    },
+    {
       "id": "FTA-CORPTAX",
       "title": "UAE Federal Decree-Law No. 47/2022 on Corporate Tax",
       "url": "https://www.fta.gov.ae/en/Legislation-Guides/Corporate-Tax-Guides-and-Publications.aspx"

@@ -17,7 +17,14 @@ import re
 from typing import Any
 
 
-_TRN_RE = re.compile(r"^\d{15}$")
+# PINT-AE TRN format: 15 digits, starts with '1', ends with '03'.
+# Layout: '1' + 12 middle digits + '03' = 15 characters total.
+# Example valid TRN: 100000000000003 (1 + 12 zeros + 03)
+# See https://docs.peppol.eu/poac/pint-ae/ and FTA TRN issuance rules.
+_TRN_RE = re.compile(r"^1\d{12}03$")
+
+# TIN (Peppol participant ID) is the first 10 digits of the TRN.
+_TIN_RE = re.compile(r"^1\d{9}$")
 
 
 def _is_valid_trn(value: Any) -> bool:
