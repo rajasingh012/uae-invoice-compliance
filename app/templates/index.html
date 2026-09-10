@@ -46,7 +46,13 @@
             {% else %}
               <div class="thumb-fallback">{{ s.filename }}</div>
             {% endif %}
-            <span class="sev-badge sev-{{ s.risk_level }}">{{ s.risk_score }}/100</span>
+            {% if s.risk_level == 'low' %}
+              <span class="sev-badge sev-low">PASS</span>
+            {% elif s.risk_level == 'high' %}
+              <span class="sev-badge sev-high">{{ s.findings_count }} ISSUES</span>
+            {% else %}
+              <span class="sev-badge sev-moderate">REVIEW</span>
+            {% endif %}
           </div>
           <div class="sample-body">
             <div class="sample-title">{{ s.filename }}</div>
