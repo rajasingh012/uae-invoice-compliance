@@ -186,3 +186,108 @@ table.extracted td code {
   background: #f6f7f8;
 }
 .doc-preview img { height: auto; object-fit: contain; }
+
+/* --- sample report cards ------------------------------------------------- */
+
+.sample-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+.sample-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--muted);
+  border-radius: 8px;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--text);
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.sample-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.sample-card.sev-low      { border-left-color: var(--ok); }
+.sample-card.sev-moderate { border-left-color: var(--warn); }
+.sample-card.sev-high     { border-left-color: var(--bad); }
+
+.sample-thumb {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.sample-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.thumb-fallback {
+  color: #555;
+  font-family: monospace;
+  font-size: 0.85rem;
+  padding: 1rem;
+  text-align: center;
+}
+.sev-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(15, 17, 23, 0.85);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.sev-badge.sev-low      { color: var(--ok); border-color: var(--ok); }
+.sev-badge.sev-moderate { color: var(--warn); border-color: var(--warn); }
+.sev-badge.sev-high     { color: var(--bad); border-color: var(--bad); }
+
+.sample-body {
+  padding: 0.85rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.sample-title {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.sample-tagline {
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.35;
+}
+.sample-summary {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sample-counts {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+}
+.count-pill {
+  background: var(--border);
+  color: var(--text);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.small { font-size: 0.8rem; }

@@ -1,0 +1,77 @@
+{
+  "id": "sample-defective-pdf",
+  "filename": "defective.pdf",
+  "fixture_url": "/static/samples/defective.pdf",
+  "extracted": {
+    "supplier_trn": null,
+    "supplier_name": "Acme Trading LLC",
+    "buyer_trn": "100987654300003",
+    "buyer_name": "Bright Star FZE",
+    "tin": null,
+    "invoice_number": "INV-2026-00043",
+    "invoice_date": "2026-09-02",
+    "currency": "USD",
+    "subtotal": 1000.0,
+    "vat_rate": 5,
+    "vat_amount": 25.0,
+    "total": 1050.0,
+    "line_items": [
+      {
+        "description": "Widget A",
+        "quantity": 10,
+        "unit_price": 50.0,
+        "vat_rate": 5
+      },
+      {
+        "description": "Widget B",
+        "quantity": 10,
+        "unit_price": 50.0,
+        "vat_rate": 5
+      }
+    ],
+    "invoice_type": "B2B",
+    "reverse_charge": false
+  },
+  "findings": [
+    {
+      "code": "TRN-SUPPLIER-PRESENT",
+      "severity": "critical",
+      "message": "Supplier Tax Registration Number (TRN) is missing or malformed.",
+      "fix": "Request the supplier's 15-digit TRN and reprint the invoice. Per FTA VAT Guide, every VAT-registered supplier must show TRN on every tax invoice.",
+      "citation": "FTA VAT Guide \u2014 Tax Invoice requirements"
+    },
+    {
+      "code": "VAT-MATH-CORRECT",
+      "severity": "critical",
+      "message": "Sum of line-level VAT does not match the invoice's stated total VAT.",
+      "fix": "Recompute VAT per line at the stated rate and reconcile to the printed total. A mismatch is a red flag during FTA audit.",
+      "citation": "FTA VAT Guide \u2014 Calculation of Tax"
+    },
+    {
+      "code": "LINE-VAT-INDIVIDUAL-CORRECT",
+      "severity": "warning",
+      "message": "Stated VAT total is internally inconsistent with line-level VAT computations.",
+      "fix": "Verify each line's VAT amount matches (quantity x unit price x rate / 100). The grand total may reconcile but individual lines may be wrong \u2014 this is a common hallucination pattern when OCR misreads a single digit.",
+      "citation": "FTA VAT Guide \u2014 Calculation of Tax (per-line)"
+    },
+    {
+      "code": "TOTAL-RECONCILES",
+      "severity": "critical",
+      "message": "Stated invoice total does not equal subtotal + VAT.",
+      "fix": "Verify the printed total. It must equal subtotal plus VAT. A mismatch indicates a misread or misprint \u2014 recheck the source document before filing.",
+      "citation": "FTA VAT Guide \u2014 Calculation of Tax"
+    },
+    {
+      "code": "CURRENCY-AED-EXPECTED",
+      "severity": "info",
+      "message": "Invoice is in a currency other than AED.",
+      "fix": "For UAE domestic supplies, AED is expected. For foreign-currency invoices, ensure the exchange rate used is the FTA-published daily rate for the invoice date.",
+      "citation": "FTA VAT Guide \u2014 Currency & Exchange Rates"
+    }
+  ],
+  "risk_score": 100,
+  "risk_level": "high",
+  "summary": "INV-2026-00043: 3 critical issues, 1 warning, 1 informational note.",
+  "rules_source": "UAE FTA E-Invoicing & VAT Field Readiness Checks",
+  "tagline": "Defective invoice (PDF) \u2014 missing supplier TRN, broken VAT math, USD instead of AED."
+}

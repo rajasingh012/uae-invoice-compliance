@@ -29,6 +29,40 @@
       {% if error %}<p class="error">{{ error }}</p>{% endif %}
     </div>
 
+    {% if samples %}
+    <div class="panel">
+      <h2>Sample reports <span class="muted small">(no upload needed)</span></h2>
+      <p class="muted">
+        Pre-computed against the current rule set. Click a card to open the
+        full report — works even after a fresh deploy and without a DeepSeek
+        API key.
+      </p>
+      <div class="sample-grid">
+        {% for s in samples %}
+        <a class="sample-card sev-{{ s.risk_level }}" href="/reports/{{ s.id }}">
+          <div class="sample-thumb">
+            {% if s.thumbnail_url %}
+              <img src="{{ s.thumbnail_url }}" alt="{{ s.filename }} thumbnail" loading="lazy" />
+            {% else %}
+              <div class="thumb-fallback">{{ s.filename }}</div>
+            {% endif %}
+            <span class="sev-badge sev-{{ s.risk_level }}">{{ s.risk_score }}/100</span>
+          </div>
+          <div class="sample-body">
+            <div class="sample-title">{{ s.filename }}</div>
+            <div class="sample-tagline">{{ s.tagline }}</div>
+            <div class="sample-summary">{{ s.summary }}</div>
+            <div class="sample-counts">
+              <span class="count-pill">{{ s.findings_count }} finding{{ '' if s.findings_count == 1 else 's' }}</span>
+              <span class="muted small">View report &rarr;</span>
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     <div class="panel">
       <h2>Recent runs</h2>
       {% if recent %}
@@ -44,7 +78,7 @@
           {% endfor %}
         </ul>
       {% else %}
-        <p class="empty">No runs yet — upload a PDF above.</p>
+        <p class="empty">No recent uploads — try a <a href="#sample-reports">sample report</a> above, or upload your own invoice.</p>
       {% endif %}
     </div>
 

@@ -97,7 +97,9 @@ def _score_findings(findings: list[dict[str, Any]]) -> int:
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def index(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
-        request, "index.html", {"recent": _recent_runs(), "error": None}
+        request,
+        "index.html",
+        {"recent": _recent_runs(), "samples": _sample_cards(), "error": None},
     )
 
 
@@ -163,6 +165,26 @@ async def report_source(report_id: str) -> Response:
     if envelope is None:
         raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found")
 
+    # Sample reports live in static/samples/, not in uploads/
+    if report_id.startswith("sample-"):
+        fixture_path = STATIC_DIR / "samples" / envelope.get("filename", "")
+        if not fixture_path.exists():
+            raise HTTPException(
+                status_code=410,
+                detail=f"Sample fixture no longer on disk: {fixture_path.name}",
+            )
+        safe_name = fixture_path.name
+        media_type = (
+            "application/pdf"
+            if safe_name.lower().endswith(".pdf")
+            else f"image/{_img_ext(safe_name)}"
+        )
+        return Response(
+            content=fixture_path.read_bytes(),
+            media_type=media_type,
+            headers={"Content-Disposition": f'inline; filename="{safe_name}"'},
+        )
+
     safe_name = Path(envelope.get("filename", "invoice.pdf")).name  # strip any path traversal
     source_path = UPLOAD_DIR / f"{report_id}_{safe_name}"
     if not source_path.exists():
@@ -192,6 +214,7 @@ def _img_ext(filename: str) -> str:
 # and easy to inspect.
 
 ENVELOPES_DIR = Path("./runtime_data/envelopes").resolve()
+SAMPLES_DIR = (BASE_DIR.parent / "samples" / "reports").resolve()
 
 
 def _envelope_path(report_id: str) -> Path:
@@ -206,10 +229,41 @@ def _save_envelope(envelope: dict[str, Any]) -> None:
 
 
 def _load_envelope(report_id: str) -> dict[str, Any] | None:
+    """Resolve a report by id. Sample-* ids fall back to committed JSON in
+    samples/reports/ so the demo cards work even after a fresh deploy
+    (sample reports survive restarts; user uploads do not)."""
     path = _envelope_path(report_id)
-    if not path.exists():
-        return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    if report_id.startswith("sample-"):
+        sample_path = SAMPLES_DIR / f"{report_id}.json"
+        if sample_path.exists():
+            return json.loads(sample_path.read_text(encoding="utf-8"))
+    return None
+
+
+def _sample_cards() -> list[dict[str, Any]]:
+    """Metadata for the 3 pre-baked sample reports shown on the index page."""
+    out: list[dict[str, Any]] = []
+    if not SAMPLES_DIR.exists():
+        return out
+    for path in sorted(SAMPLES_DIR.glob("sample-*.json")):
+        env = json.loads(path.read_text(encoding="utf-8"))
+        out.append(
+            {
+                "id": env["id"],
+                "filename": env.get("filename", "sample"),
+                "tagline": env.get("tagline", ""),
+                "thumbnail_url": env.get("thumbnail_url"),
+                "fixture_url": env.get("fixture_url"),
+                "risk_score": env["risk_score"],
+                "risk_level": env["risk_level"],
+                "summary": env.get("summary", ""),
+                "findings_count": len(env.get("findings", [])),
+            }
+        )
+    return out
 
 
 def _recent_runs(limit: int = 5) -> list[dict[str, Any]]:

@@ -1,0 +1,42 @@
+{
+  "id": "sample-clean",
+  "filename": "clean.pdf",
+  "fixture_url": "/static/samples/clean.pdf",
+  "extracted": {
+    "supplier_trn": "100123456700003",
+    "supplier_name": "Acme Trading LLC",
+    "buyer_trn": "100987654300003",
+    "buyer_name": "Bright Star FZE",
+    "tin": "1001234567",
+    "invoice_number": "INV-2026-00042",
+    "invoice_date": "2026-09-01",
+    "currency": "AED",
+    "subtotal": 1000.0,
+    "vat_rate": 5,
+    "vat_amount": 50.0,
+    "total": 1050.0,
+    "line_items": [
+      {
+        "description": "Widget A",
+        "quantity": 10,
+        "unit_price": 50.0,
+        "vat_rate": 5
+      },
+      {
+        "description": "Widget B",
+        "quantity": 10,
+        "unit_price": 50.0,
+        "vat_rate": 5
+      }
+    ],
+    "invoice_type": "B2B",
+    "reverse_charge": false,
+    "corporate_tax_treatment": "CT-deductible"
+  },
+  "findings": [],
+  "risk_score": 0,
+  "risk_level": "low",
+  "summary": "INV-2026-00042: all e-invoicing field checks passed.",
+  "rules_source": "UAE FTA E-Invoicing & VAT Field Readiness Checks",
+  "tagline": "Clean invoice \u2014 passes every check. Use this to show the happy-path report."
+}
