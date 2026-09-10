@@ -6,6 +6,7 @@ Layout variance is absorbed by the LLM; the rules engine stays deterministic.
 from __future__ import annotations
 
 import base64
+import io
 import json
 import logging
 import os
@@ -13,12 +14,24 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import fitz  # pymupdf — used to render PDF first page to PNG for vision input
 
 logger = logging.getLogger(__name__)
 
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
-DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash-vision-exp")
 DEEPSEEK_BASE_URL = os.environ.get("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
+
+# DeepSeek's vision models accept JPEG/PNG/GIF/WebP. PDF is not supported
+# as direct input, so we render the first page via pymupdf.
+_VISION_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+_VISION_MIME = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
 
 # Fields we want — keep this small and stable. Adding a field here means
 # downstream rules can rely on it.
@@ -53,10 +66,36 @@ SYSTEM_PROMPT = (
 )
 
 
-def _pdf_to_data_url(pdf_path: Path) -> str:
-    raw = pdf_path.read_bytes()
-    b64 = base64.b64encode(raw).decode("ascii")
-    return f"data:application/pdf;base64,{b64}"
+def _load_image_data_url(path: Path) -> tuple[str, str]:
+    """Return (data_url, kind) for either a PDF or a vision-supported image.
+
+    PDFs: render first page to PNG via pymupdf, return as image/png data URL.
+    Images (png/jpg/jpeg/gif/webp): base64-encode directly.
+    Other extensions raise ValueError so the caller surfaces a clear error.
+
+    Returns a tuple so the caller can log what happened ("rendered from PDF"
+    vs "passed through PNG") — useful for debugging.
+    """
+    ext = path.suffix.lower()
+
+    if ext in _VISION_IMAGE_EXTS:
+        mime = _VISION_MIME[ext]
+        b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+        return f"data:{mime};base64,{b64}", "image"
+
+    if ext == ".pdf":
+        with fitz.open(path) as doc:
+            if not doc.page_count:
+                raise RuntimeError(f"PDF has no pages: {path}")
+            page = doc.load_page(0)
+            pix = page.get_pixmap(dpi=200)  # 200 dpi is plenty for invoice OCR
+            png_bytes = pix.tobytes("png")
+        b64 = base64.b64encode(png_bytes).decode("ascii")
+        return f"data:image/png;base64,{b64}", "pdf→png"
+
+    raise ValueError(
+        f"Unsupported input format {ext!r}. Accepted: PDF, PNG, JPEG, GIF, WebP."
+    )
 
 
 def extract_invoice_fields(pdf_path: Path) -> dict[str, Any]:
@@ -65,7 +104,8 @@ def extract_invoice_fields(pdf_path: Path) -> dict[str, Any]:
             "DEEPSEEK_API_KEY is not set. Copy .env.example to .env and fill it."
         )
 
-    data_url = _pdf_to_data_url(pdf_path)
+    data_url, kind = _load_image_data_url(pdf_path)
+    logger.info("Extracting from %s (kind=%s)", pdf_path.name, kind)
 
     user_prompt = (
         "Extract the invoice fields from this PDF.\n"

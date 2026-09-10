@@ -175,3 +175,14 @@ table.extracted td code {
   border-top: 1px solid var(--border);
 }
 .all-clear p { color: var(--ok); margin: 0; }
+/* Source document preview (PDF iframe / image) */
+.doc-preview {
+  display: block;
+  width: 100%;
+  max-width: 900px;
+  height: 720px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #f6f7f8;
+}
+.doc-preview img { height: auto; object-fit: contain; }

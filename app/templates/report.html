@@ -19,9 +19,23 @@
         <div class="summary-headline">{{ envelope.summary }}</div>
         <div class="muted">
           Source: <strong>{{ envelope.filename }}</strong>
+          &middot; <a href="/reports/{{ envelope.id }}/source" target="_blank" rel="noopener">open original</a>
           &middot; Rules: {{ envelope.rules_source }}
         </div>
       </div>
+    </div>
+
+    <div class="panel">
+      <h2>Source document</h2>
+      {% set is_pdf = envelope.filename.lower().endswith('.pdf') %}
+      {% if is_pdf %}
+        <iframe src="/reports/{{ envelope.id }}/source" class="doc-preview" title="Original PDF"></iframe>
+        <p class="muted">PDF preview — your browser's built-in viewer is used.
+           <a href="/reports/{{ envelope.id }}/source" target="_blank" rel="noopener">Open in a new tab</a>
+           if the inline view doesn't load.</p>
+      {% else %}
+        <img src="/reports/{{ envelope.id }}/source" alt="Original invoice image" class="doc-preview" />
+      {% endif %}
     </div>
 
     {% if envelope.findings %}

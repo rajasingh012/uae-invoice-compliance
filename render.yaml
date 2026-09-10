@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: uae-invoice-compliance
+    runtime: python
+    plan: free
+    region: oregon
+    autoDeploy: true
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: LOG_LEVEL
+        value: INFO
+      - key: UPLOAD_DIR
+        value: ./uploads

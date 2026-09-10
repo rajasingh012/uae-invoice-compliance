@@ -20,8 +20,8 @@
         checks, and flag what needs fixing before you file.
       </p>
       <form action="/reports" method="post" enctype="multipart/form-data">
-        <label for="file">Invoice PDF</label>
-        <input type="file" id="file" name="file" accept="application/pdf,.pdf" required />
+        <label for="file">Invoice PDF or image</label>
+        <input type="file" id="file" name="file" accept="application/pdf,.pdf,image/png,image/jpeg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp" required />
         <div class="row">
           <button type="submit">Run check</button>
         </div>

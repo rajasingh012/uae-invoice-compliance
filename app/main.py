@@ -125,7 +125,7 @@ async def upload_and_run(request: Request, file: UploadFile = File(...)) -> Resp
             "index.html",
             {
                 "recent": _recent_runs(),
-                "error": f"Could not extract fields from this PDF: {exc}",
+                "error": f"Could not extract fields from this file: {exc}",
             },
             status_code=400,
         )
@@ -154,6 +154,37 @@ async def view_report(request: Request, report_id: str) -> HTMLResponse:
     if envelope is None:
         raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found")
     return templates.TemplateResponse(request, "report.html", {"envelope": envelope})
+
+
+@app.get("/reports/{report_id}/source")
+async def report_source(report_id: str) -> Response:
+    """Serve the original uploaded file (PDF or image) for preview on the report page."""
+    envelope = _load_envelope(report_id)
+    if envelope is None:
+        raise HTTPException(status_code=404, detail=f"Report '{report_id}' not found")
+
+    safe_name = Path(envelope.get("filename", "invoice.pdf")).name  # strip any path traversal
+    source_path = UPLOAD_DIR / f"{report_id}_{safe_name}"
+    if not source_path.exists():
+        raise HTTPException(
+            status_code=410,
+            detail=f"Original file no longer on disk: {source_path.name}",
+        )
+
+    media_type = "application/pdf" if safe_name.lower().endswith(".pdf") else f"image/{_img_ext(safe_name)}"
+    return Response(
+        content=source_path.read_bytes(),
+        media_type=media_type,
+        headers={"Content-Disposition": f'inline; filename="{safe_name}"'},
+    )
+
+
+_IMG_MIME = {"png": "png", "jpg": "jpeg", "jpeg": "jpeg", "gif": "gif", "webp": "webp"}
+
+
+def _img_ext(filename: str) -> str:
+    ext = Path(filename).suffix.lower().lstrip(".")
+    return _IMG_MIME.get(ext, "png")
 
 
 # --- on-disk envelope store (JSON blob, same pattern as uae-compliance-copilot)
